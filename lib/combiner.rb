@@ -17,10 +17,11 @@ class Combiner
 	def combine(*enumerators)
 		Enumerator.new do |yielder|
 			last_values = Array.new(enumerators.size)
-			done = enumerators.all? { |enumerator| enumerator.nil? }
+			done = enumerators.compact.empty?
+
 			while not done
 				last_values.each_with_index do |value, index|
-					if value.nil? and not enumerators[index].nil?
+					if enumerators[index] && value.nil?
 						begin
 							last_values[index] = enumerators[index].next
 						rescue StopIteration
@@ -29,7 +30,7 @@ class Combiner
 					end
 				end
 
-				done = enumerators.all? { |enumerator| enumerator.nil? } and last_values.compact.empty?
+				done = (enumerators + last_values).compact.empty?
 				unless done
 					min_key = last_values.map { |e| key(e) }.min do |a, b|
 						if a.nil? and b.nil?
@@ -42,7 +43,9 @@ class Combiner
 							a <=> b
 						end
 					end
+
 					values = Array.new(last_values.size)
+
 					last_values.each_with_index do |value, index|
 						if key(value) == min_key
 							values[index] = value
