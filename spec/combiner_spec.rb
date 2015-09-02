@@ -25,7 +25,7 @@ RSpec::Matchers.define :return_elements do |*expected|
 		read_elements = read_from_enumerator(enumerator)
 		read_elements == expected
 	end
-	failure_message_for_should do |enumerator|
+	failure_message do |enumerator|
 		"expected that #{enumerator} would return #{expected.inspect}, but it returned #{read_elements.inspect}"
 	end
 end
@@ -40,7 +40,7 @@ describe Combiner do
 	end
 	context "#combine" do
 		subject { combiner.combine(*input_enumerators) }
-	
+
 		context "when an empty set of enumerators are combined" do
 			let(:input_enumerators) { [] }
 			it { should be_empty }
