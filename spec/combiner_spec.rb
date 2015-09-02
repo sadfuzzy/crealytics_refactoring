@@ -15,7 +15,7 @@ end
 
 RSpec::Matchers.define :be_empty do
   match do |enumerator|
-	read_from_enumerator(enumerator).empty?
+		read_from_enumerator(enumerator).empty?
   end
 end
 
@@ -31,13 +31,14 @@ RSpec::Matchers.define :return_elements do |*expected|
 end
 
 describe Combiner do
-	let(:key_extractor) { Proc.new {|arg| arg} }
 	let(:input_enumerators) { [] }
+	let(:key_extractor) { Proc.new {|arg| arg} }
 	let(:combiner) { Combiner.new(&key_extractor) }
 
 	def enumerator_for(*array)
 		array.to_enum :each
 	end
+
 	context "#combine" do
 		subject { combiner.combine(*input_enumerators) }
 
