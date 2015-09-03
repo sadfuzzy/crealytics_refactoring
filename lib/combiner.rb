@@ -16,7 +16,7 @@ class Combiner
 
 	def set_empty_values(values=nil, enumerators=nil)
 		values.each_with_index do |value, index|
-			if enumerators[index] && value.nil?
+			if enumerators[index] && !value
 				begin
 					values[index] = enumerators[index].next
 				rescue StopIteration
@@ -36,15 +36,16 @@ class Combiner
 
 				done = (enumerators + last_values).compact.empty?
 				unless done
-					min_key = last_values.map { |e| key(e) }.min do |a, b|
-						if a.nil? and b.nil?
+					keys = last_values.map { |value| key(value) }
+					min_key = keys.min do |left, right|
+						if !left && !right
 							0
-						elsif a.nil?
+						elsif !left
 							1
-						elsif b.nil?
+						elsif !right
 							-1
 						else
-							a <=> b
+							left <=> right
 						end
 					end
 

@@ -73,7 +73,7 @@ class Combiner
 
 	def set_empty_values(values=nil, enumerators=nil)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Combiner#set_empty_values refers to enumerators more than self          </span>  </li></ul>
 		values.each_with_index do |value, index|
-			if enumerators[index] &amp;&amp; value.nil?<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(NilCheck) Combiner#set_empty_values performs a nil-check.          </span>  </li></ul>
+			if enumerators[index] &amp;&amp; !value
 				begin
 					values[index] = enumerators[index].next
 				rescue StopIteration
@@ -93,15 +93,16 @@ class Combiner
 
 				done = (enumerators + last_values).compact.empty?
 				unless done
-					min_key = last_values.map { |e| key(e) }.min do |a, b|<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'a'          </span>  </li>  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'b'          </span>  </li>  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'e'          </span>  </li></ul>
-						if a.nil? and b.nil?<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(NilCheck) Combiner#combine performs a nil-check.          </span>  </li></ul>
+					keys = last_values.map { |value| key(value) }
+					min_key = keys.min do |left, right|
+						if !left &amp;&amp; !right
 							0
-						elsif a.nil?
+						elsif !left
 							1
-						elsif b.nil?
+						elsif !right
 							-1
 						else
-							a &lt;=&gt; b
+							left &lt;=&gt; right
 						end
 					end
 
