@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>RubyCritic</title>
+    <link href="../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../assets/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <header class="project-header group">
+      <div class="container">
+        <h1 class="logo"><a href="../overview.html" class="logo-link">RubyCritic</a></h1>
+        <nav class="project-nav">
+          <a href="../overview.html" class="project-nav-item">Overview</a>
+          <a href="../code_index.html" class="project-nav-item">Code</a>
+          <a href="../smells_index.html" class="project-nav-item">Smells</a>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <div class="file-header group rated">
+  <span class="rating rating-a circled-text circle">
+    A
+  </span>
+  <h2 class="file-name">Combiner</h2>
+
+  <span class="file-committed-at">
+    
+      Updated <time class='js-timeago' datetime='2015-09-03 22:30:25 +0300'>2015-09-03 22:30:25 +0300</time>
+    
+  </span>
+
+  <div class="file-stats group">
+    <div class="file-stat">
+      55 complexity
+    </div>
+    <div class="file-stat">
+      13.8 complexity per method
+    </div>
+    <div class="file-stat">
+      4 churn
+    </div>
+    <div class="file-stat">
+      4 methods
+    </div>
+    <div class="file-stat">
+      0 duplication
+    </div>
+  </div>
+
+  
+    <button id="js-toggle-smells" class="smells-toggle-button button">Toggle Smells</button>
+  
+</div>
+
+<code class="prettyprint linenums lang-ruby file-code js-file-code"># input:
+# - two enumerators returning elements sorted by their key
+# - block calculating the key for each element
+# - block combining two elements having the same key or a single element, if there is no partner
+# output:
+# - enumerator for the combined elements
+class Combiner
+
+	def initialize(&amp;key_extractor)
+		@key_extractor = key_extractor
+	end
+
+	def key(value)
+		@key_extractor.call(value) if value
+	end
+
+	def set_empty_values(values=nil, enumerators=nil)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Combiner#set_empty_values refers to enumerators more than self          </span>  </li></ul>
+		values.each_with_index do |value, index|
+			if enumerators[index] &amp;&amp; value.nil?<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(NilCheck) Combiner#set_empty_values performs a nil-check.          </span>  </li></ul>
+				begin
+					values[index] = enumerators[index].next
+				rescue StopIteration
+					enumerators[index] = nil
+				end
+			end
+		end
+	end
+
+	def combine(*enumerators)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(HighComplexity) Combiner#combine has a flog score of 44          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Combiner#combine refers to last_values more than self          </span>  </li></ul>
+		Enumerator.new do |yielder|
+			last_values = Array.new(enumerators.size)
+			done = enumerators.compact.empty?
+
+			while not done
+				set_empty_values(last_values, enumerators)
+
+				done = (enumerators + last_values).compact.empty?
+				unless done
+					min_key = last_values.map { |e| key(e) }.min do |a, b|<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'a'          </span>  </li>  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'b'          </span>  </li>  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Combiner#combine has the variable name 'e'          </span>  </li></ul>
+						if a.nil? and b.nil?<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(NilCheck) Combiner#combine performs a nil-check.          </span>  </li></ul>
+							0
+						elsif a.nil?
+							1
+						elsif b.nil?
+							-1
+						else
+							a &lt;=&gt; b
+						end
+					end
+
+					values = Array.new(last_values.size)
+
+					last_values.each_with_index do |value, index|
+						if key(value) == min_key
+							values[index] = value
+							last_values[index] = nil
+						end
+					end
+
+					yielder.yield(values)
+				end
+			end
+		end
+	end
+end
+</code>
+
+    </div>
+    <script src='../assets/javascripts/jquery-2.1.0.js'></script>
+    <script src='../assets/javascripts/jquery.tablesorter.js'></script>
+    <script src='../assets/javascripts/jquery.floatThead-v1.2.7.js'></script>
+    <script src='../assets/javascripts/jquery.timeago-v1.4.1.js'></script>
+    <script src='../assets/javascripts/highcharts.src-4.0.1.js'></script>
+    <script src='../assets/javascripts/jquery.scrollTo-1.4.11.js'></script>
+    <script src='../assets/javascripts/prettify-4-Mar-2013.js'></script>
+    <script src='../assets/javascripts/application.js'></script>
+  </body>
+</html>

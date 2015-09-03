@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>RubyCritic</title>
+    <link href="assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="assets/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <header class="project-header group">
+      <div class="container">
+        <h1 class="logo"><a href="overview.html" class="logo-link">RubyCritic</a></h1>
+        <nav class="project-nav">
+          <a href="overview.html" class="project-nav-item">Overview</a>
+          <a href="code_index.html" class="project-nav-item">Code</a>
+          <a href="smells_index.html" class="project-nav-item">Smells</a>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <div class="file-header group rated">
+  <span class="rating rating-c circled-text circle">
+    C
+  </span>
+  <h2 class="file-name">String</h2>
+
+  <span class="file-committed-at">
+    
+      Updated <time class='js-timeago' datetime='2015-09-02 19:10:50 +0300'>2015-09-02 19:10:50 +0300</time>
+    
+  </span>
+
+  <div class="file-stats group">
+    <div class="file-stat">
+      162 complexity
+    </div>
+    <div class="file-stat">
+      13.5 complexity per method
+    </div>
+    <div class="file-stat">
+      1 churn
+    </div>
+    <div class="file-stat">
+      12 methods
+    </div>
+    <div class="file-stat">
+      0 duplication
+    </div>
+  </div>
+
+  
+    <button id="js-toggle-smells" class="smells-toggle-button button">Toggle Smells</button>
+  
+</div>
+
+<code class="prettyprint linenums lang-ruby file-code js-file-code">require File.expand_path(&#39;lib/combiner&#39;,File.dirname(__FILE__))
+require &#39;csv&#39;
+require &#39;date&#39;
+
+def latest(name)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) latest refers to files more than self          </span>  </li></ul>
+  files = Dir[&quot;#{ ENV[&quot;HOME&quot;] }/workspace/*#{name}*.txt&quot;]
+
+  files.sort_by! do |file|
+    last_date = /\d+-\d+-\d+_[[:alpha:]]+\.txt$/.match file
+    last_date = last_date.to_s.match /\d+-\d+-\d+/
+
+    date = DateTime.parse(last_date.to_s)
+    date
+  end
+
+  throw RuntimeError if files.empty?
+
+  files.last
+end
+
+class String
+	def from_german_to_f
+		self.gsub(&#39;,&#39;, &#39;.&#39;).to_f
+	end
+end
+
+class Float
+	def to_german_s
+		self.to_s.gsub(&#39;.&#39;, &#39;,&#39;)
+	end
+end
+
+class Modifier
+
+	KEYWORD_UNIQUE_ID = &#39;Keyword Unique ID&#39;
+	LAST_VALUE_WINS = [&#39;Account ID&#39;, &#39;Account Name&#39;, &#39;Campaign&#39;, &#39;Ad Group&#39;, &#39;Keyword&#39;, &#39;Keyword Type&#39;, &#39;Subid&#39;, &#39;Paused&#39;, &#39;Max CPC&#39;, &#39;Keyword Unique ID&#39;, &#39;ACCOUNT&#39;, &#39;CAMPAIGN&#39;, &#39;BRAND&#39;, &#39;BRAND+CATEGORY&#39;, &#39;ADGROUP&#39;, &#39;KEYWORD&#39;]
+	LAST_REAL_VALUE_WINS = [&#39;Last Avg CPC&#39;, &#39;Last Avg Pos&#39;]
+	INT_VALUES = [&#39;Clicks&#39;, &#39;Impressions&#39;, &#39;ACCOUNT - Clicks&#39;, &#39;CAMPAIGN - Clicks&#39;, &#39;BRAND - Clicks&#39;, &#39;BRAND+CATEGORY - Clicks&#39;, &#39;ADGROUP - Clicks&#39;, &#39;KEYWORD - Clicks&#39;]
+	FLOAT_VALUES = [&#39;Avg CPC&#39;, &#39;CTR&#39;, &#39;Est EPC&#39;, &#39;newBid&#39;, &#39;Costs&#39;, &#39;Avg Pos&#39;]
+
+  LINES_PER_FILE = 120000
+
+	def initialize(saleamount_factor, cancellation_factor)
+		@saleamount_factor = saleamount_factor
+		@cancellation_factor = cancellation_factor
+	end
+
+	def modify(output, input)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(HighComplexity) Modifier#modify has a flog score of 44          </span>  </li></ul>
+		input = sort(input)
+
+		input_enumerator = lazy_read(input)
+
+		combiner = Combiner.new do |value|
+			value[KEYWORD_UNIQUE_ID]
+		end.combine(input_enumerator)
+
+		merger = Enumerator.new do |yielder|
+			while true
+				begin
+					list_of_rows = combiner.next
+					merged = combine_hashes(list_of_rows)
+					yielder.yield(combine_values(merged))
+				rescue StopIteration
+					break
+				end
+			end
+		end
+
+    done = false
+    file_index = 0
+    file_name = output.gsub(&#39;.txt&#39;, &#39;&#39;)
+    while not done do
+		  CSV.open(file_name + &quot;_#{file_index}.txt&quot;, &quot;wb&quot;, { :col_sep =&gt; &quot;\t&quot;, :headers =&gt; :first_row, :row_sep =&gt; &quot;\r\n&quot; }) do |csv|
+			  headers_written = false
+        line_count = 0
+			  while line_count &lt; LINES_PER_FILE
+				  begin
+					  merged = merger.next
+					  if not headers_written
+						  csv &lt;&lt; merged.keys
+						  headers_written = true
+              line_count +=1
+					  end
+					  csv &lt;&lt; merged
+            line_count +=1
+				  rescue StopIteration
+            done = true
+					  break
+				  end
+			  end
+        file_index += 1
+		  end
+    end
+	end
+
+	private
+
+	def combine(merged)
+		result = []
+		merged.each do |_, hash|
+			result &lt;&lt; combine_values(hash)
+		end
+		result
+	end
+
+	def combine_values(hash)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(HighComplexity) Modifier#combine_values has a flog score of 53          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_values refers to hash more than self          </span>  </li></ul>
+		LAST_VALUE_WINS.each do |key|
+			hash[key] = hash[key].last<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li></ul>
+		end
+		LAST_REAL_VALUE_WINS.each do |key|
+			hash[key] = hash[key].select {|v| not (v.nil? or v == 0 or v == &#39;0&#39; or v == &#39;&#39;)}.last<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li>  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Modifier#combine_values has the variable name 'v'          </span>  </li>  <li class="smell old">    <span class="description">(NilCheck) Modifier#combine_values performs a nil-check.          </span>  </li></ul>
+		end
+		INT_VALUES.each do |key|
+			hash[key] = hash[key][0].to_s<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0] 4 times                        <a href="modifier.html#L114" class="js-smell-location">0</a>                  <a href="modifier.html#L117" class="js-smell-location">1</a>                  <a href="modifier.html#L120" class="js-smell-location">2</a>                  <a href="modifier.html#L123" class="js-smell-location">3</a>                  </span>  </li></ul>
+		end
+		FLOAT_VALUES.each do |key|
+			hash[key] = hash[key][0].from_german_to_f.to_german_s<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0] 4 times                        <a href="modifier.html#L114" class="js-smell-location">0</a>                  <a href="modifier.html#L117" class="js-smell-location">1</a>                  <a href="modifier.html#L120" class="js-smell-location">2</a>                  <a href="modifier.html#L123" class="js-smell-location">3</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0].from_german_to_f 3 times                        <a href="modifier.html#L117" class="js-smell-location">0</a>                  <a href="modifier.html#L120" class="js-smell-location">1</a>                  <a href="modifier.html#L123" class="js-smell-location">2</a>                  </span>  </li></ul>
+		end
+		[&#39;number of commissions&#39;].each do |key|
+			hash[key] = (@cancellation_factor * hash[key][0].from_german_to_f).to_german_s<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0] 4 times                        <a href="modifier.html#L114" class="js-smell-location">0</a>                  <a href="modifier.html#L117" class="js-smell-location">1</a>                  <a href="modifier.html#L120" class="js-smell-location">2</a>                  <a href="modifier.html#L123" class="js-smell-location">3</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0].from_german_to_f 3 times                        <a href="modifier.html#L117" class="js-smell-location">0</a>                  <a href="modifier.html#L120" class="js-smell-location">1</a>                  <a href="modifier.html#L123" class="js-smell-location">2</a>                  </span>  </li></ul>
+		end
+		[&#39;Commission Value&#39;, &#39;ACCOUNT - Commission Value&#39;, &#39;CAMPAIGN - Commission Value&#39;, &#39;BRAND - Commission Value&#39;, &#39;BRAND+CATEGORY - Commission Value&#39;, &#39;ADGROUP - Commission Value&#39;, &#39;KEYWORD - Commission Value&#39;].each do |key|
+			hash[key] = (@cancellation_factor * @saleamount_factor * hash[key][0].from_german_to_f).to_german_s<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key] 6 times                        <a href="modifier.html#L108" class="js-smell-location">0</a>                  <a href="modifier.html#L111" class="js-smell-location">1</a>                  <a href="modifier.html#L114" class="js-smell-location">2</a>                  <a href="modifier.html#L117" class="js-smell-location">3</a>                  <a href="modifier.html#L120" class="js-smell-location">4</a>                  <a href="modifier.html#L123" class="js-smell-location">5</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0] 4 times                        <a href="modifier.html#L114" class="js-smell-location">0</a>                  <a href="modifier.html#L117" class="js-smell-location">1</a>                  <a href="modifier.html#L120" class="js-smell-location">2</a>                  <a href="modifier.html#L123" class="js-smell-location">3</a>                  </span>  </li>  <li class="smell old">    <span class="description">(DuplicateMethodCall) Modifier#combine_values calls hash[key][0].from_german_to_f 3 times                        <a href="modifier.html#L117" class="js-smell-location">0</a>                  <a href="modifier.html#L120" class="js-smell-location">1</a>                  <a href="modifier.html#L123" class="js-smell-location">2</a>                  </span>  </li></ul>
+		end
+		hash
+	end
+
+	def combine_hashes(list_of_rows)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to row more than self          </span>  </li></ul>
+		keys = []
+		list_of_rows.each do |row|
+			next if row.nil?<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(NilCheck) Modifier#combine_hashes performs a nil-check.          </span>  </li></ul>
+			row.headers.each do |key|
+				keys &lt;&lt; key
+			end
+		end
+		result = {}
+		keys.each do |key|
+			result[key] = []
+			list_of_rows.each do |row|
+				result[key] &lt;&lt; (row.nil? ? nil : row[key])
+			end
+		end
+		result
+	end
+
+	DEFAULT_CSV_OPTIONS = { :col_sep =&gt; &quot;\t&quot;, :headers =&gt; :first_row }
+
+	def parse(file)
+		CSV.read(file, DEFAULT_CSV_OPTIONS)
+	end
+
+	def lazy_read(file)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#lazy_read refers to yielder more than self          </span>  </li></ul>
+		Enumerator.new do |yielder|
+			CSV.foreach(file, DEFAULT_CSV_OPTIONS) do |row|
+				yielder.yield(row)
+			end
+		end
+	end
+
+	def write(content, headers, output)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#write refers to csv more than self          </span>  </li></ul>
+		CSV.open(output, &quot;wb&quot;, { :col_sep =&gt; &quot;\t&quot;, :headers =&gt; :first_row, :row_sep =&gt; &quot;\r\n&quot; }) do |csv|
+			csv &lt;&lt; headers
+			content.each do |row|
+				csv &lt;&lt; row
+			end
+		end
+	end
+
+	public
+	def sort(file)
+		output = &quot;#{file}.sorted&quot;
+		content_as_table = parse(file)
+		headers = content_as_table.headers
+		index_of_key = headers.index(&#39;Clicks&#39;)
+		content = content_as_table.sort_by { |a| -a[index_of_key].to_i }<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(UncommunicativeVariableName) Modifier#sort has the variable name 'a'          </span>  </li></ul>
+		write(content, headers, output)
+		return output
+	end
+end
+
+modified = input = latest(&#39;project_2012-07-27_2012-10-10_performancedata&#39;)
+modification_factor = 1
+cancellaction_factor = 0.4
+modifier = Modifier.new(modification_factor, cancellaction_factor)
+modifier.modify(modified, input)
+
+puts &quot;DONE modifying&quot;
+</code>
+
+    </div>
+    <script src='assets/javascripts/jquery-2.1.0.js'></script>
+    <script src='assets/javascripts/jquery.tablesorter.js'></script>
+    <script src='assets/javascripts/jquery.floatThead-v1.2.7.js'></script>
+    <script src='assets/javascripts/jquery.timeago-v1.4.1.js'></script>
+    <script src='assets/javascripts/highcharts.src-4.0.1.js'></script>
+    <script src='assets/javascripts/jquery.scrollTo-1.4.11.js'></script>
+    <script src='assets/javascripts/prettify-4-Mar-2013.js'></script>
+    <script src='assets/javascripts/application.js'></script>
+  </body>
+</html>

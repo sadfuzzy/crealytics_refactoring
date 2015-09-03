@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>RubyCritic</title>
+    <link href="../assets/stylesheets/application.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <link href="../assets/stylesheets/prettify.custom_theme.css" media="screen, projection, print" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <header class="project-header group">
+      <div class="container">
+        <h1 class="logo"><a href="../overview.html" class="logo-link">RubyCritic</a></h1>
+        <nav class="project-nav">
+          <a href="../overview.html" class="project-nav-item">Overview</a>
+          <a href="../code_index.html" class="project-nav-item">Code</a>
+          <a href="../smells_index.html" class="project-nav-item">Smells</a>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <div class="file-header group rated">
+  <span class="rating rating-c circled-text circle">
+    C
+  </span>
+  <h2 class="file-name">CombinerSpec</h2>
+
+  <span class="file-committed-at">
+    
+      Updated <time class='js-timeago' datetime='2015-09-02 20:53:51 +0300'>2015-09-02 20:53:51 +0300</time>
+    
+  </span>
+
+  <div class="file-stats group">
+    <div class="file-stat">
+      154 complexity
+    </div>
+    <div class="file-stat">
+      77.0 complexity per method
+    </div>
+    <div class="file-stat">
+      3 churn
+    </div>
+    <div class="file-stat">
+      2 methods
+    </div>
+    <div class="file-stat">
+      0 duplication
+    </div>
+  </div>
+
+  
+    <button id="js-toggle-smells" class="smells-toggle-button button">Toggle Smells</button>
+  
+</div>
+
+<code class="prettyprint linenums lang-ruby file-code js-file-code">require File.expand_path(&#39;spec_helper&#39;, File.dirname(__FILE__))
+require &#39;combiner&#39;
+
+def read_from_enumerator(enumerator)
+	result = []
+	loop do
+		begin
+			result &lt;&lt; enumerator.next
+		rescue StopIteration
+			break
+		end
+	end
+	result
+end
+
+RSpec::Matchers.define :be_empty do
+  match do |enumerator|
+		read_from_enumerator(enumerator).empty?
+  end
+end
+
+RSpec::Matchers.define :return_elements do |*expected|
+	read_elements = nil
+	match do |enumerator|
+		read_elements = read_from_enumerator(enumerator)
+		read_elements == expected
+	end
+	failure_message do |enumerator|
+		&quot;expected that #{enumerator} would return #{expected.inspect}, but it returned #{read_elements.inspect}&quot;
+	end
+end
+
+describe Combiner do
+	let(:input_enumerators) { [] }
+	let(:key_extractor) { Proc.new {|arg| arg} }
+	let(:combiner) { Combiner.new(&amp;key_extractor) }
+
+	def enumerator_for(*array)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) enumerator_for refers to array more than self          </span>  </li></ul>
+		array.to_enum :each
+	end
+
+	context &quot;#combine&quot; do
+		subject { combiner.combine(*input_enumerators) }
+
+		context &quot;when an empty set of enumerators are combined&quot; do
+			let(:input_enumerators) { [] }
+			it { should be_empty }
+		end
+
+		context &quot;when all enumerators are empty&quot; do
+			let(:input_enumerators) { [enumerator_for(), enumerator_for()] }
+			it { should be_empty }
+		end
+
+		context &quot;when all enumerators have one element with the same key&quot; do
+			let(:input_enumerators) { [enumerator_for(1), enumerator_for(1)] }
+			it { should_not be_empty }
+			it &quot;should return an array with the key-identical elements&quot; do
+				should return_elements [1,1]
+			end
+		end
+
+		context &quot;when all enumerators have a sequence of elements with the same key&quot; do
+			let(:input_enumerators) { [enumerator_for(1,2), enumerator_for(1,2)] }
+			it { should_not be_empty }
+			it &quot;should return arrays with the key-identical elements&quot; do
+				should return_elements [1,1],[2,2]
+			end
+		end
+
+		context &quot;when all enumerators have a sequence of elements with the same key, but one is longer&quot; do
+			let(:input_enumerators) { [enumerator_for(1,2), enumerator_for(1,2,3)] }
+			it { should_not be_empty }
+			it &quot;should return arrays with the key-identical elements&quot; do
+				should return_elements [1,1],[2,2],[nil,3]
+			end
+		end
+
+		context &quot;when all enumerators have same length but different elements&quot; do
+			let(:input_enumerators) { [enumerator_for(2), enumerator_for(1)] }
+			it { should_not be_empty }
+			it &quot;should return arrays with the key-identical elements in the correct order&quot; do
+				should return_elements [nil,1],[2,nil]
+			end
+		end
+
+		context &quot;for a complex example using a key extractor&quot; do
+			let(:input_enumerators) { [enumerator_for(5,3,2,0), enumerator_for(5,4,3,1),enumerator_for(5,4)] }
+			let(:key_extractor) { Proc.new {|number| -number} }
+			it { should_not be_empty }
+			it &quot;should return arrays with the key-identical elements in the correct order&quot; do
+				should return_elements [5,5,5],[nil,4,4],[3,3,nil],[2,nil,nil],[nil,1,nil],[0,nil,nil]
+			end
+		end
+	end
+end
+</code>
+
+    </div>
+    <script src='../assets/javascripts/jquery-2.1.0.js'></script>
+    <script src='../assets/javascripts/jquery.tablesorter.js'></script>
+    <script src='../assets/javascripts/jquery.floatThead-v1.2.7.js'></script>
+    <script src='../assets/javascripts/jquery.timeago-v1.4.1.js'></script>
+    <script src='../assets/javascripts/highcharts.src-4.0.1.js'></script>
+    <script src='../assets/javascripts/jquery.scrollTo-1.4.11.js'></script>
+    <script src='../assets/javascripts/prettify-4-Mar-2013.js'></script>
+    <script src='../assets/javascripts/application.js'></script>
+  </body>
+</html>
