@@ -55,7 +55,7 @@
   
 </div>
 
-<code class="prettyprint linenums lang-ruby file-code js-file-code">def compare_old(left, right)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) compare_old refers to left more than self          </span>  </li></ul>
+<code class="prettyprint linenums lang-ruby file-code js-file-code">def compare_old(left, right)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) compare_old refers to left more than self          </span>  </li></ul>
   if !left &amp;&amp; !right
   	0
   elsif !left
@@ -67,7 +67,7 @@
   end
 end
 
-def compare_new(left, right)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) compare_new refers to left more than self          </span>  </li>  <li class="smell new">    <span class="description">(FeatureEnvy) compare_new refers to right more than self          </span>  </li></ul>
+def compare_new(left, right)<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) compare_new refers to left more than self          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) compare_new refers to right more than self          </span>  </li></ul>
   right.to_i &lt;=&gt; left.to_i
 end
 

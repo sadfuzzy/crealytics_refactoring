@@ -14,11 +14,11 @@ class Combiner
 		@key_extractor.call(value) if value
 	end
 
-	def set_empty_values(values=nil, enumerators=nil)
-		values.each_with_index do |value, index|
+	def set_empty_values(enumerators=nil)
+		@last_values.each_with_index do |value, index|
 			if enumerators[index] && !value
 				begin
-					values[index] = enumerators[index].next
+					@last_values[index] = enumerators[index].next
 				rescue StopIteration
 					enumerators[index] = nil
 				end
@@ -41,31 +41,31 @@ class Combiner
 		enumerators.compact.empty?
 	end
 
-	def set_values_from_last(min_key, values, last_values)
-		last_values.each_with_index do |value, index|
+	def set_values_from_last(min_key)
+		@last_values.each_with_index do |value, index|
 			if key(value) == min_key
-				values[index] = value
-				last_values[index] = nil
+				@values[index] = value
+				@last_values[index] = nil
 			end
 		end
 	end
 
 	def combine(*enumerators)
 		Enumerator.new do |yielder|
-			last_values = Array.new(enumerators.size)
+			@last_values = Array.new(enumerators.size)
 			done = finished?(enumerators)
 
 			while not done
-				set_empty_values(last_values, enumerators)
-				done = finished?(enumerators + last_values)
-				values = Array.new(last_values.size)
+				set_empty_values(enumerators)
+
+				done = finished?(enumerators + @last_values)
+				@values = Array.new(@last_values.size)
 
 				unless done
-					keys = last_values.map { |value| key(value) }
-					min_key = get_min_key(keys)
-					set_values_from_last(min_key, values, last_values)
+					min_key = get_min_key(@last_values.map { |value| key(value) })
+					set_values_from_last(min_key)
 
-					yielder.yield(values)
+					yielder.yield(@values)
 				end
 			end
 		end
