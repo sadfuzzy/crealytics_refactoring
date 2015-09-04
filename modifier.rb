@@ -57,7 +57,58 @@ class Modifier
   ]
   LINES_PER_FILE = 120000
 
-	def initialize(saleamount_factor, cancellation_factor)
+	class ModifierHash
+    def initialize(hash)
+      @hash = hash
+    end
+
+    def combine_values
+      combine_last_value_wins
+      combine_last_real_value_wins
+      combine_int_values
+      combine_number_of_commissions
+      combine_commission_values
+
+      @hash
+    end
+
+    def combine_last_value_wins
+      LAST_VALUE_WINS.each do |key|
+  			@hash[key] = @hash[key].last
+  		end
+    end
+
+    def combine_last_real_value_wins
+      LAST_REAL_VALUE_WINS.each do |key|
+  			@hash[key] = @hash[key].select {|value| value.to_i != 0}.last
+  		end
+  	end
+
+    def combine_int_values
+      INT_VALUES.each do |key|
+  			@hash[key] = @hash[key][0].to_s
+  		end
+  	end
+
+    def combine_float_values
+      FLOAT_VALUES.each do |key|
+  			@hash[key] = @hash[key][0].from_german_to_f.to_german_s
+  		end
+  	end
+
+    def combine_number_of_commissions
+      key = 'number of commissions'
+  		@hash[key] = (@cancellation_factor * @hash[key][0].from_german_to_f).to_german_s
+  	end
+
+    def combine_commission_values
+      COMMISSION_VALUES.each do |key|
+  			@hash[key] = (@cancellation_factor * @saleamount_factor * @hash[key][0].from_german_to_f).to_german_s
+  		end
+  	end
+  end
+
+  def initialize(saleamount_factor, cancellation_factor)
 		@saleamount_factor = saleamount_factor
 		@cancellation_factor = cancellation_factor
 	end
@@ -119,49 +170,9 @@ class Modifier
 		result
 	end
 
-  def combine_last_value_wins(hash)
-    LAST_VALUE_WINS.each do |key|
-			hash[key] = hash[key].last
-		end
-  end
-
-  def combine_last_real_value_wins(hash)
-    LAST_REAL_VALUE_WINS.each do |key|
-			hash[key] = hash[key].select {|value| value.to_i != 0}.last
-		end
-	end
-
-  def combine_int_values(hash)
-    INT_VALUES.each do |key|
-			hash[key] = hash[key][0].to_s
-		end
-	end
-
-  def combine_float_values(hash)
-    FLOAT_VALUES.each do |key|
-			hash[key] = hash[key][0].from_german_to_f.to_german_s
-		end
-	end
-
-  def combine_number_of_commissions(hash)
-    key = 'number of commissions'
-		hash[key] = (@cancellation_factor * hash[key][0].from_german_to_f).to_german_s
-	end
-
-  def combine_commission_values(hash)
-    COMMISSION_VALUES.each do |key|
-			hash[key] = (@cancellation_factor * @saleamount_factor * hash[key][0].from_german_to_f).to_german_s
-		end
-	end
-
   def combine_values(hash)
-    combine_last_value_wins(hash)
-    combine_last_real_value_wins(hash)
-    combine_int_values(hash)
-    combine_number_of_commissions(hash)
-    combine_commission_values(hash)
-
-		hash
+    mod_hash = ModifierHash.new(hash)
+    mod_hash.combine_values
 	end
 
 	def combine_hashes(list_of_rows, keys=[], result={})

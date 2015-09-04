@@ -28,22 +28,22 @@
 
   <span class="file-committed-at">
     
-      Updated <time class='js-timeago' datetime='2015-09-02 19:10:50 +0300'>2015-09-02 19:10:50 +0300</time>
+      Updated <time class='js-timeago' datetime='2015-09-04 15:16:50 +0300'>2015-09-04 15:16:50 +0300</time>
     
   </span>
 
   <div class="file-stats group">
     <div class="file-stat">
-      155 complexity
+      159 complexity
     </div>
     <div class="file-stat">
-      8.6 complexity per method
+      8.0 complexity per method
     </div>
     <div class="file-stat">
-      1 churn
+      2 churn
     </div>
     <div class="file-stat">
-      18 methods
+      20 methods
     </div>
     <div class="file-stat">
       0 duplication
@@ -114,7 +114,58 @@ class Modifier
   ]
   LINES_PER_FILE = 120000
 
-	def initialize(saleamount_factor, cancellation_factor)
+	class ModifierHash
+    def initialize(hash)
+      @hash = hash
+    end
+
+    def combine_values
+      combine_last_value_wins
+      combine_last_real_value_wins
+      combine_int_values
+      combine_number_of_commissions
+      combine_commission_values
+
+      @hash
+    end
+
+    def combine_last_value_wins
+      LAST_VALUE_WINS.each do |key|
+  			@hash[key] = @hash[key].last
+  		end
+    end
+
+    def combine_last_real_value_wins
+      LAST_REAL_VALUE_WINS.each do |key|
+  			@hash[key] = @hash[key].select {|value| value.to_i != 0}.last
+  		end
+  	end
+
+    def combine_int_values
+      INT_VALUES.each do |key|
+  			@hash[key] = @hash[key][0].to_s
+  		end
+  	end
+
+    def combine_float_values
+      FLOAT_VALUES.each do |key|
+  			@hash[key] = @hash[key][0].from_german_to_f.to_german_s
+  		end
+  	end
+
+    def combine_number_of_commissions
+      key = &#39;number of commissions&#39;
+  		@hash[key] = (@cancellation_factor * @hash[key][0].from_german_to_f).to_german_s
+  	end
+
+    def combine_commission_values
+      COMMISSION_VALUES.each do |key|
+  			@hash[key] = (@cancellation_factor * @saleamount_factor * @hash[key][0].from_german_to_f).to_german_s
+  		end
+  	end
+  end
+
+  def initialize(saleamount_factor, cancellation_factor)
 		@saleamount_factor = saleamount_factor
 		@cancellation_factor = cancellation_factor
 	end
@@ -176,52 +227,12 @@ class Modifier
 		result
 	end
 
-  def combine_last_value_wins(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_last_value_wins refers to hash more than self          </span>  </li></ul>
-    LAST_VALUE_WINS.each do |key|
-			hash[key] = hash[key].last
-		end
-  end
-
-  def combine_last_real_value_wins(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_last_real_value_wins refers to hash more than self          </span>  </li></ul>
-    LAST_REAL_VALUE_WINS.each do |key|
-			hash[key] = hash[key].select {|value| value.to_i != 0}.last
-		end
+  def combine_values(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_values refers to mod_hash more than self          </span>  </li></ul>
+    mod_hash = ModifierHash.new(hash)
+    mod_hash.combine_values
 	end
 
-  def combine_int_values(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_int_values refers to hash more than self          </span>  </li></ul>
-    INT_VALUES.each do |key|
-			hash[key] = hash[key][0].to_s
-		end
-	end
-
-  def combine_float_values(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_float_values refers to hash more than self          </span>  </li></ul>
-    FLOAT_VALUES.each do |key|
-			hash[key] = hash[key][0].from_german_to_f.to_german_s
-		end
-	end
-
-  def combine_number_of_commissions(hash)<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_number_of_commissions refers to hash more than self          </span>  </li></ul>
-    key = &#39;number of commissions&#39;
-		hash[key] = (@cancellation_factor * hash[key][0].from_german_to_f).to_german_s
-	end
-
-  def combine_commission_values(hash)
-    COMMISSION_VALUES.each do |key|
-			hash[key] = (@cancellation_factor * @saleamount_factor * hash[key][0].from_german_to_f).to_german_s
-		end
-	end
-
-  def combine_values(hash)
-    combine_last_value_wins(hash)
-    combine_last_real_value_wins(hash)
-    combine_int_values(hash)
-    combine_number_of_commissions(hash)
-    combine_commission_values(hash)
-
-		hash
-	end
-
-	def combine_hashes(list_of_rows, keys=[], result={})<ul class="nocode smells js-smells">  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to keys more than self          </span>  </li>  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to list_of_rows more than self          </span>  </li>  <li class="smell new">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to result more than self          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to row more than self          </span>  </li></ul>
+	def combine_hashes(list_of_rows, keys=[], result={})<ul class="nocode smells js-smells">  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to keys more than self          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to list_of_rows more than self          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to result more than self          </span>  </li>  <li class="smell old">    <span class="description">(FeatureEnvy) Modifier#combine_hashes refers to row more than self          </span>  </li></ul>
 		list_of_rows.each do |row|
 			next unless row
       keys &lt;&lt; row.headers
