@@ -26,37 +26,44 @@ class Combiner
 		end
 	end
 
+	def get_min_key(keys)
+		keys.min do |left, right|
+			case
+			when !left && !right then 0
+			when !left then 1
+			when !right then -1
+			else left <=> right
+			end
+		end
+	end
+
+	def finished?(enumerators)
+		enumerators.compact.empty?
+	end
+
+	def set_values_from_last(min_key, values, last_values)
+		last_values.each_with_index do |value, index|
+			if key(value) == min_key
+				values[index] = value
+				last_values[index] = nil
+			end
+		end
+	end
+
 	def combine(*enumerators)
 		Enumerator.new do |yielder|
 			last_values = Array.new(enumerators.size)
-			done = enumerators.compact.empty?
+			done = finished?(enumerators)
 
 			while not done
 				set_empty_values(last_values, enumerators)
+				done = finished?(enumerators + last_values)
+				values = Array.new(last_values.size)
 
-				done = (enumerators + last_values).compact.empty?
 				unless done
 					keys = last_values.map { |value| key(value) }
-					min_key = keys.min do |left, right|
-						if !left && !right
-							0
-						elsif !left
-							1
-						elsif !right
-							-1
-						else
-							left <=> right
-						end
-					end
-
-					values = Array.new(last_values.size)
-
-					last_values.each_with_index do |value, index|
-						if key(value) == min_key
-							values[index] = value
-							last_values[index] = nil
-						end
-					end
+					min_key = get_min_key(keys)
+					set_values_from_last(min_key, values, last_values)
 
 					yielder.yield(values)
 				end
